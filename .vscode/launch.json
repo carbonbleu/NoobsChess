@@ -1,0 +1,10 @@
+{
+    "configurations": [
+        {
+            "name": "C#: NoobsChess Debug",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/NoobsChess/NoobsChess.csproj"
+        }
+    ]
+}
