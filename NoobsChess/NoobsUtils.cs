@@ -19,5 +19,12 @@ namespace NoobsEngine
         public static void PlaySquareOnBitBoard(BitBoard board, BoardSquares square) {
             board.Value |= 1UL << NoobsGlobals.Square120To64[(int)square];
         }
+
+        public static UInt64 NextUInt64() {
+            Random random = new Random();
+            var buffer = new byte[sizeof(UInt64)];
+            random.NextBytes(buffer);
+            return BitConverter.ToUInt64(buffer, 0);
+        }
     }
 }

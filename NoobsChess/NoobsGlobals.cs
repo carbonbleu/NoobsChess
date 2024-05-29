@@ -14,5 +14,9 @@ namespace NoobsEngine
 
         public static BitBoard[] SetMask { get; set; } = new BitBoard[64];
         public static BitBoard[] ClearMask { get; set; } = new BitBoard[64];
+
+        public static UInt64[,] PieceKeys { get; set; } = new UInt64[13,120];
+        public static UInt64 ColourKey { get; set; }
+        public static UInt64[] CastlingKeys { get; set; } = new UInt64[16];
     }
 }

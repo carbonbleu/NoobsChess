@@ -8,10 +8,10 @@ namespace NoobsEngine
 {
     public class MoveUndo
     {
-        int move;
-        int castlingPermission;
-        int enPassantSquare;
-        int fiftyMoveRule;
-        UInt64 positionKey;
+        public int Move { get; set; }
+        public int CastlingPermission { get; set; }
+        public int EnPassantSquare { get; set; }
+        public int FiftyMoveRule { get; set; }
+        public UInt64 PositionKey { get; set; }
     }
 }

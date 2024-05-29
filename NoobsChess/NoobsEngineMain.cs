@@ -20,6 +20,23 @@ namespace NoobsEngine
         {
             Initialize120SquareTo64();
             InitializeBitMasks();
+            InitializeHashKeys();
+        }
+
+        static void InitializeHashKeys()
+        {
+            Random random = new Random();
+            for (int i = 0; i < 13; i++) {
+                for (int j = 0; j < 120; j++) {
+                    NoobsGlobals.PieceKeys[i, j] = NoobsUtils.NextUInt64();
+                }
+            }
+
+            NoobsGlobals.ColourKey = NoobsUtils.NextUInt64();
+
+            for (int i = 0; i < 16; i++) {
+                NoobsGlobals.CastlingKeys[i] = NoobsUtils.NextUInt64();
+            }
         }
 
         static void InitializeBitMasks()
