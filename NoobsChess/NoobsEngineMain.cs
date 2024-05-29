@@ -14,14 +14,6 @@ namespace NoobsEngine
         static void Main(string[] args)
         {
             InitAll();
-
-            BitBoard board = new BitBoard(0UL);
-            
-            board.SetBit(BoardSquares.A5);
-            board.Print();
-
-            board.ClearBit(BoardSquares.A5);
-            board.Print();
         }
 
         static void InitAll()
