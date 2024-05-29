@@ -16,6 +16,11 @@ namespace NoobsEngine
             return (21 + file) + (rank * 10);
         }
 
+        public static int FileRankTo120Square(BoardFiles file, BoardRanks rank)
+        {
+            return (21 + (int) file) + ((int) rank * 10);
+        }
+
         public static void PlaySquareOnBitBoard(BitBoard board, BoardSquares square) {
             board.Value |= 1UL << NoobsGlobals.Square120To64[(int)square];
         }

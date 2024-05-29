@@ -12,5 +12,7 @@ namespace NoobsEngine
         public const int BoardSquareCount = 120;
 
         public const int MaxGameMoves = 2048;
+
+        public const String StartingFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     }
 }

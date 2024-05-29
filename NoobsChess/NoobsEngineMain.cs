@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 using NoobsEngine.Enums;
 using NoobsEngine.Data;
+using NoobsChess.Fen;
+
+using static NoobsEngine.NoobsGlobals;
 
 namespace NoobsEngine
 {
@@ -14,6 +17,22 @@ namespace NoobsEngine
         static void Main(string[] args)
         {
             InitAll();
+
+            ChessBoard board = new ChessBoard();
+            String? fen = Console.ReadLine();
+            if (fen == null) {
+                Console.WriteLine("FEN not provided");
+                return;
+            }
+             
+            int parseSuccess = FenUtils.ParseFen(fen!, board);
+            if (parseSuccess != 0) {
+                Console.WriteLine("Invalid FEN");
+                return;
+            }
+
+            Console.WriteLine(board.ToString());
+
         }
 
         static void InitAll()
@@ -21,6 +40,24 @@ namespace NoobsEngine
             Initialize120SquareTo64();
             InitializeBitMasks();
             InitializeHashKeys();
+            InitializeBoardLookups();
+        }
+
+        private static void InitializeBoardLookups()
+        {
+            for (int i = 0; i < NoobsDefs.BoardSquareCount; i++)
+            {
+                FileLookup[i] = (int) BoardSquares.Offboard;
+                RankLookup[i] = (int) BoardSquares.Offboard;
+            }
+
+            for (BoardRanks rank = BoardRanks.Rank1; rank <= BoardRanks.Rank8; rank++) {
+                for (BoardFiles file = BoardFiles.A; file <= BoardFiles.H; file++) {
+                    int square = NoobsUtils.FileRankTo120Square(file, rank);
+                    FileLookup[square] = (int) file;
+                    RankLookup[square] = (int) rank;
+                }
+            }
         }
 
         static void InitializeHashKeys()
@@ -28,27 +65,27 @@ namespace NoobsEngine
             Random random = new Random();
             for (int i = 0; i < 13; i++) {
                 for (int j = 0; j < 120; j++) {
-                    NoobsGlobals.PieceKeys[i, j] = NoobsUtils.NextUInt64();
+                    PieceKeys[i, j] = NoobsUtils.NextUInt64();
                 }
             }
 
-            NoobsGlobals.ColourKey = NoobsUtils.NextUInt64();
+            ColourKey = NoobsUtils.NextUInt64();
 
             for (int i = 0; i < 16; i++) {
-                NoobsGlobals.CastlingKeys[i] = NoobsUtils.NextUInt64();
+                CastlingKeys[i] = NoobsUtils.NextUInt64();
             }
         }
 
         static void InitializeBitMasks()
         {
             for (int i = 0; i < 64; i++) {
-                NoobsGlobals.SetMask[i] = new BitBoard(0UL);
-                NoobsGlobals.ClearMask[i] = new BitBoard(0UL);
+                SetMask[i] = new BitBoard(0UL);
+                ClearMask[i] = new BitBoard(0UL);
             }
 
             for (int i = 0; i < 64; i++) {
-                NoobsGlobals.SetMask[i].Value |= 1UL << i;
-                NoobsGlobals.ClearMask[i].Value = ~NoobsGlobals.SetMask[i].Value;
+                SetMask[i].Value |= 1UL << i;
+                ClearMask[i].Value = ~SetMask[i].Value;
             }
         }
 
@@ -60,7 +97,7 @@ namespace NoobsEngine
                 {
                     Console.WriteLine();
                 }
-                Console.Write("{0,5}", NoobsGlobals.Square120To64[i]);
+                Console.Write("{0,5}", Square120To64[i]);
 
             }
 
@@ -73,7 +110,7 @@ namespace NoobsEngine
                 {
                     Console.WriteLine();
                 }
-                Console.Write("{0,5}", NoobsGlobals.Square64To120[i]);
+                Console.Write("{0,5}", Square64To120[i]);
 
             }
 
@@ -85,11 +122,11 @@ namespace NoobsEngine
         {
             for (int idx = 0; idx < NoobsDefs.BoardSquareCount; idx++)
             {
-                NoobsGlobals.Square120To64[idx] = 65;
+                Square120To64[idx] = 65;
             }
             for (int idx = 0; idx < 64; idx++)
             {
-                NoobsGlobals.Square64To120[idx] = 120;
+                Square64To120[idx] = 120;
             }
 
             int square64 = 0;
@@ -99,8 +136,8 @@ namespace NoobsEngine
                 for (BoardFiles file = BoardFiles.A; file <= BoardFiles.H; file++)
                 {
                     int square = NoobsUtils.FileRankTo120Square((int) file, (int) rank);
-                    NoobsGlobals.Square64To120[square64] = square;
-                    NoobsGlobals.Square120To64[square] = square64;
+                    Square64To120[square64] = square;
+                    Square120To64[square] = square64;
                     square64++;
                 }
             }
