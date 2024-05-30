@@ -56,5 +56,28 @@ namespace NoobsEngine
 
         public static int[] FileLookup = new int[NoobsDefs.BoardSquareCount];
         public static int[] RankLookup = new int[NoobsDefs.BoardSquareCount];
+
+        public static readonly int[] KnightDirection = new int[] {
+            -8, -19, -21, -12, 8, 19, 21, 12
+        };
+
+        public static readonly int[] BishopDirection = new int[] {
+            -9, -11, 11, 9
+        };
+
+        public static readonly int[] RookDirection = new int[] {
+            -1, -10, 1, 10
+        };
+
+        public static readonly int[] KingDirection = new int[] {
+            -1, -10, 1, 10, -9, -11, 11, 9
+        };
+
+        public static readonly bool[] PiecePawn = { false, true, false, false, false, false, false, true, false, false, false, false, false };	
+        public static readonly bool[] PieceKnight = { false, false, true, false, false, false, false, false, true, false, false, false, false };
+        public static readonly bool[] PieceKing = { false, false, false, false, false, false, true, false, false, false, false, false, true };
+        public static readonly bool[] PieceRookOrQueen = { false, false, false, false, true, true, false, false, false, false, true, true, false };
+        public static readonly bool[] PieceBishopOrQueen = { false, false, false, true, false, true, false, false, false, true, false, true, false };
+        public static readonly bool[] PieceSlides = { false, false, false, true, true, true, false, false, false, true, true, true, false };
     }
 }

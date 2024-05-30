@@ -1,7 +1,7 @@
 using NoobsEngine;
 using NoobsEngine.Enums;
 
-namespace NoobsChess.Fen {
+namespace NoobsEngine.Fen {
     public class FenUtils {
         public static int ParseFen(String fen, ChessBoard board) {
             board.Reset();
@@ -127,7 +127,7 @@ namespace NoobsChess.Fen {
             }
            
             board.SetPositionKey(board.GeneratePositionKey());
-
+            board.UpdateMaterial();
             return 0;
         }
     }

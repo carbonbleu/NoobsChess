@@ -37,11 +37,11 @@ namespace NoobsEngine.Data
 
                     if (((one << square64) & Value) != 0)
                     {
-                        Console.Write("x");
+                        Console.Write("x ");
                     }
                     else
                     {
-                        Console.Write("-");
+                        Console.Write("- ");
                     }
                 }
                 Console.WriteLine();

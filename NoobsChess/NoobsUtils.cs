@@ -7,6 +7,8 @@ using System.Threading.Tasks.Dataflow;
 using NoobsEngine.Data;
 using NoobsEngine.Enums;
 
+using static NoobsEngine.NoobsGlobals;
+
 namespace NoobsEngine
 {
     public class NoobsUtils
@@ -30,6 +32,13 @@ namespace NoobsEngine
             var buffer = new byte[sizeof(UInt64)];
             random.NextBytes(buffer);
             return BitConverter.ToUInt64(buffer, 0);
+        }
+
+        public static String GetSquareNotation(int square) {
+            int file = FileLookup[square];
+            int rank = RankLookup[square];
+
+            return String.Format("{0}{1}", (char)('a' + file), (char)('1' + rank));
         }
     }
 }

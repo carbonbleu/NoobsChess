@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using NoobsEngine.Enums;
 using NoobsEngine.Data;
-using NoobsChess.Fen;
+using NoobsEngine.Fen;
 
 using static NoobsEngine.NoobsGlobals;
 
@@ -18,22 +18,29 @@ namespace NoobsEngine
         {
             InitAll();
 
-            ChessBoard board = new ChessBoard();
-            String? fen = Console.ReadLine();
-            if (fen == null) {
-                Console.WriteLine("FEN not provided");
-                return;
-            }
-             
-            int parseSuccess = FenUtils.ParseFen(fen!, board);
-            if (parseSuccess != 0) {
-                Console.WriteLine("Invalid FEN");
-                return;
-            }
+            int from = (int) BoardSquares.A2;
+            int to = (int) BoardSquares.H7;
+            int capturedPiece = (int) Pieces.WhiteRook;
+            int promotedPiece = (int) Pieces.Empty;
 
-            Console.WriteLine(board.ToString());
+            int move = from | (to << 7) | (capturedPiece << 14) | (promotedPiece << 20);
 
+            Move moveObj = new Move(move);
+            Console.WriteLine(moveObj.GetFromPosition());
+            Console.WriteLine(moveObj.GetToPosition());
+            Console.WriteLine(moveObj.GetCapturedPiece());
+            Console.WriteLine(moveObj.GetPromotedPiece());
+
+            moveObj.Value |= 0x80000;
+
+            Console.WriteLine(moveObj.IsPawnStartMove());
+
+            Console.WriteLine(NoobsUtils.GetSquareNotation(from));
+            Console.WriteLine(NoobsUtils.GetSquareNotation(to));
+            Console.WriteLine(moveObj.ToString());
         }
+
+        
 
         static void InitAll()
         {
