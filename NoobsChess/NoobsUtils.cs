@@ -40,5 +40,35 @@ namespace NoobsEngine
 
             return String.Format("{0}{1}", (char)('a' + file), (char)('1' + rank));
         }
+
+        public static bool IsSquareOnBoard(int square) {
+            return FileLookup[square] != (int) BoardSquares.Offboard;
+        }
+
+        public static bool IsValidSide(int side) {
+            return side != (int) Players.Both;
+        }
+
+        public static bool IsValidFileRank(int file, int rank) {
+            return (file >= (int) BoardFiles.A && file <= (int) BoardFiles.H)
+                && (rank >= (int) BoardRanks.Rank1 && rank <= (int) BoardRanks.Rank8);
+        }
+
+        public static bool IsPieceValidOrEmpty(int piece) {
+            return piece >= (int) Pieces.Empty && piece <= (int) Pieces.BlackKing;
+        }
+
+        public static bool IsPieceValid(int piece) {
+            return piece >= (int) Pieces.WhitePawn && piece <= (int) Pieces.BlackKing;
+        }
+
+        public static Move ConstructMove(int from, int to, int capturedPiece, int promotedPiece, int flag) {
+            return new Move(from | (to << 7) | (capturedPiece << 14) | (promotedPiece << 20) | flag);
+        }
+
+        public static bool IsSquareOffBoard(int square) {
+            return FileLookup[square] == (int) BoardSquares.Offboard;
+        }
+
     }
 }

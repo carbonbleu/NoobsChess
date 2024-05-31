@@ -29,7 +29,7 @@ namespace NoobsEngine
 
         UInt64 positionKey;
 
-        int[] pieceCount = new int[13];
+        public int[] PieceCount { get; set; } = new int[13];
 
         int[] bigPiecesByColour = new int[2];
         int[] majorPiecesByColour = new int[2];
@@ -39,7 +39,7 @@ namespace NoobsEngine
 
         MoveUndo[] history = new MoveUndo[NoobsDefs.MaxGameMoves];
 
-        int[,] pieceList = new int[13,10];
+        public int[,] PieceList { get; set; } = new int[13,10];
 
         public ChessBoard() {
             Reset();
@@ -97,7 +97,7 @@ namespace NoobsEngine
             Pawns[(int) Players.Both] = new BitBoard(0UL);
 
             for (int i = 0; i < 13; i++) {
-                pieceCount[i] = 0;
+                PieceCount[i] = 0;
             }
 
             kingSquares[(int) Players.White] = kingSquares[(int) Players.Black] = (int) BoardSquares.NoSquare;
@@ -181,8 +181,8 @@ namespace NoobsEngine
 
                     MaterialScores[pieceColour] += PieceValues[piece];
 
-                    pieceList[piece,pieceCount[piece]] = square;
-                    pieceCount[piece]++;
+                    PieceList[piece,PieceCount[piece]] = square;
+                    PieceCount[piece]++;
 
                     if (piece == (int) Pieces.WhiteKing) {
                         kingSquares[(int) Players.White] = square;
@@ -218,8 +218,8 @@ namespace NoobsEngine
             tempPawns[(int) Players.Both] = Pawns[(int) Players.Both];
             
             for (Pieces piece = Pieces.WhitePawn; piece <= Pieces.BlackKing; piece++) {
-                for (int tempI = 0; tempI < pieceCount[(int) piece]; tempI++) {
-                    int square120 = pieceList[(int)piece, tempI];
+                for (int tempI = 0; tempI < PieceCount[(int) piece]; tempI++) {
+                    int square120 = PieceList[(int)piece, tempI];
                     if (PiecesOnBoard[square120] != (int) piece) {
                         Console.WriteLine("Pieces not same");
                         return false;
@@ -249,7 +249,7 @@ namespace NoobsEngine
             }
 
             for (Pieces tempPiece = Pieces.WhitePawn; tempPiece <= Pieces.BlackKing; tempPiece++) {
-                if (tempPieceCount[(int) tempPiece] != pieceCount[(int) tempPiece]) {
+                if (tempPieceCount[(int) tempPiece] != PieceCount[(int) tempPiece]) {
                     Console.WriteLine("Pieces not same");
                     return false;
                 }
@@ -257,17 +257,17 @@ namespace NoobsEngine
 
             Console.WriteLine("Pieces OK");
 
-            if (tempPawns[(int) Players.White].BitCount() != pieceCount[(int) Pieces.WhitePawn]) {
+            if (tempPawns[(int) Players.White].BitCount() != PieceCount[(int) Pieces.WhitePawn]) {
                 Console.WriteLine("White Pawn counts don't match");
                 return false;
             }
 
-            if (tempPawns[(int) Players.Black].BitCount() != pieceCount[(int) Pieces.BlackPawn]) {
+            if (tempPawns[(int) Players.Black].BitCount() != PieceCount[(int) Pieces.BlackPawn]) {
                 Console.WriteLine("Black Pawn counts don't match");
                 return false;
             }
 
-            if (tempPawns[(int) Players.Both].BitCount() != pieceCount[(int) Pieces.WhitePawn] + pieceCount[(int) Pieces.BlackPawn]) {
+            if (tempPawns[(int) Players.Both].BitCount() != PieceCount[(int) Pieces.WhitePawn] + PieceCount[(int) Pieces.BlackPawn]) {
                 Console.WriteLine("Both Pawn counts don't match");
                 return false;
             }

@@ -9,6 +9,7 @@ using NoobsEngine.Data;
 using NoobsEngine.Fen;
 
 using static NoobsEngine.NoobsGlobals;
+using NoobsChess;
 
 namespace NoobsEngine
 {
@@ -18,26 +19,15 @@ namespace NoobsEngine
         {
             InitAll();
 
-            int from = (int) BoardSquares.A2;
-            int to = (int) BoardSquares.H7;
-            int capturedPiece = (int) Pieces.WhiteRook;
-            int promotedPiece = (int) Pieces.Empty;
+            ChessBoard board = new ChessBoard();
+            FenUtils.ParseFen(NoobsDefs.FEN3, board);
+            Console.WriteLine(board);
 
-            int move = from | (to << 7) | (capturedPiece << 14) | (promotedPiece << 20);
+            MoveGen moveGen = new MoveGen();
+            moveGen.GenerateAllMoves(board);
 
-            Move moveObj = new Move(move);
-            Console.WriteLine(moveObj.GetFromPosition());
-            Console.WriteLine(moveObj.GetToPosition());
-            Console.WriteLine(moveObj.GetCapturedPiece());
-            Console.WriteLine(moveObj.GetPromotedPiece());
-
-            moveObj.Value |= 0x80000;
-
-            Console.WriteLine(moveObj.IsPawnStartMove());
-
-            Console.WriteLine(NoobsUtils.GetSquareNotation(from));
-            Console.WriteLine(NoobsUtils.GetSquareNotation(to));
-            Console.WriteLine(moveObj.ToString());
+            Console.WriteLine(moveGen);
+            Console.WriteLine(moveGen.Moves.Count);
         }
 
         

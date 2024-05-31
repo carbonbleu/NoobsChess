@@ -3,11 +3,20 @@ using static NoobsEngine.NoobsGlobals;
 namespace NoobsEngine {
     public class Move {
         // Moves can be represented in 7 bytes
-        public int Value { get; set;}
+        public int Value { get; set; }
+        public int Score { get; set; }
+
 
         public Move(int value) {
             Value = value;
+            Score = 0;
         }
+
+        public Move(int value, int score) {
+            Value = value;
+            Score = score;
+        }
+        
 
         public int GetFromPosition() {
             return Value & 0x7F;
