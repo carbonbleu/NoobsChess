@@ -20,14 +20,15 @@ namespace NoobsEngine
             InitAll();
 
             ChessBoard board = new ChessBoard();
-            FenUtils.ParseFen(NoobsDefs.FEN3, board);
-            Console.WriteLine(board);
-
+            FenUtils.ParseFen(NoobsDefs.KiwipetePosition, board);
+            
             MoveGen moveGen = new MoveGen();
             moveGen.GenerateAllMoves(board);
 
             Console.WriteLine(moveGen);
             Console.WriteLine(moveGen.Moves.Count);
+
+            Console.WriteLine(board);
         }
 
         

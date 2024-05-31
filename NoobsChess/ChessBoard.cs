@@ -8,6 +8,7 @@ using NoobsEngine.Enums;
 
 using static NoobsEngine.NoobsGlobals;
 using static NoobsEngine.Enums.Direction;
+using static NoobsEngine.NoobsUtils;
 
 namespace NoobsEngine
 {
@@ -136,7 +137,7 @@ namespace NoobsEngine
             for (BoardRanks rank = BoardRanks.Rank8; rank >= BoardRanks.Rank1; rank--) {
                 result.Append(String.Format("{0}\t", (int) (rank + 1)));
                 for (BoardFiles file = BoardFiles.A; file <= BoardFiles.H; file++) {
-                    int square = NoobsUtils.FileRankTo120Square((int) file, (int) rank);
+                    int square = FileRankTo120Square((int) file, (int) rank);
                     int piece = PiecesOnBoard[square];
                     
                     result.Append(String.Format("{0:3} ", pieceChars[piece]));
@@ -221,13 +222,10 @@ namespace NoobsEngine
                 for (int tempI = 0; tempI < PieceCount[(int) piece]; tempI++) {
                     int square120 = PieceList[(int)piece, tempI];
                     if (PiecesOnBoard[square120] != (int) piece) {
-                        Console.WriteLine("Pieces not same");
                         return false;
                     }
                 }
             }
-
-            Console.WriteLine("Pieces OK");
 
             for (int square64 = 0; square64 < 64; square64++) {
                 int square120 = Square64To120[square64];
@@ -250,30 +248,22 @@ namespace NoobsEngine
 
             for (Pieces tempPiece = Pieces.WhitePawn; tempPiece <= Pieces.BlackKing; tempPiece++) {
                 if (tempPieceCount[(int) tempPiece] != PieceCount[(int) tempPiece]) {
-                    Console.WriteLine("Pieces not same");
                     return false;
                 }
             }
-
-            Console.WriteLine("Pieces OK");
-
+            
             if (tempPawns[(int) Players.White].BitCount() != PieceCount[(int) Pieces.WhitePawn]) {
-                Console.WriteLine("White Pawn counts don't match");
                 return false;
             }
 
             if (tempPawns[(int) Players.Black].BitCount() != PieceCount[(int) Pieces.BlackPawn]) {
-                Console.WriteLine("Black Pawn counts don't match");
                 return false;
             }
 
             if (tempPawns[(int) Players.Both].BitCount() != PieceCount[(int) Pieces.WhitePawn] + PieceCount[(int) Pieces.BlackPawn]) {
-                Console.WriteLine("Both Pawn counts don't match");
                 return false;
             }
-
-            Console.WriteLine("Pawn counts OK");
-
+            
             while (tempPawns[(int) Players.White].Value > 0) {
                 int square64 = tempPawns[(int) Players.White].PopBit();
                 if (PiecesOnBoard[Square64To120[square64]] != (int) Pieces.WhitePawn) {
@@ -285,7 +275,6 @@ namespace NoobsEngine
             while (tempPawns[(int) Players.Black].Value > 0) {
                 int square64 = tempPawns[(int) Players.Black].PopBit();
                 if (PiecesOnBoard[Square64To120[square64]] != (int) Pieces.BlackPawn) {
-                    Console.WriteLine("Black Pawn squares don't match");
                     return false;
                 }
             }
@@ -293,94 +282,66 @@ namespace NoobsEngine
             while (tempPawns[(int) Players.Both].Value > 0) {
                 int square64 = tempPawns[(int) Players.Both].PopBit();
                 if (!((PiecesOnBoard[Square64To120[square64]] == (int) Pieces.BlackPawn) || (PiecesOnBoard[Square64To120[square64]] == (int) Pieces.WhitePawn))) {
-                    Console.WriteLine("Both Pawn squares don't match");
                     return false;
                 }
             }
 
-            Console.WriteLine("Pawn squares OK");
-
+            
             if (tempMaterialScores[(int) Players.White] != MaterialScores[(int) Players.White]) {
-                Console.WriteLine("White material does not match");
                 return false;
             }
-            Console.WriteLine("White material OK");
-
+            
             if (tempMaterialScores[(int) Players.Black] != MaterialScores[(int) Players.Black]) {
-                Console.WriteLine("Black material does not match");
                 return false;
             }
-            Console.WriteLine("Black material OK");
-
+            
             if (tempBigPiecesByColour[(int) Players.White] != bigPiecesByColour[(int) Players.White]) {
-                Console.WriteLine("White big piece counts do not match");
                 return false;
             }
-            Console.WriteLine("White big piece counts OK");
-
+            
             if (tempBigPiecesByColour[(int) Players.Black] != bigPiecesByColour[(int) Players.Black]) {
-                Console.WriteLine("Black big piece counts do not match");
                 return false;
             }
-            Console.WriteLine("Black big piece counts OK");
-
+            
             if (tempMajorPiecesByColour[(int) Players.White] != majorPiecesByColour[(int) Players.White]) {
-                Console.WriteLine("White major piece counts do not match");
                 return false;
             }
-            Console.WriteLine("White major piece counts OK");
-
+            
             if (tempMajorPiecesByColour[(int) Players.Black] != majorPiecesByColour[(int) Players.Black]) {
-                Console.WriteLine("Black major piece counts do not match");
                 return false;
             }
-            Console.WriteLine("Black major piece counts OK");
-
+            
             if (tempMinorPiecesByColour[(int) Players.White] != minorPiecesByColour[(int) Players.White]) {
-                Console.WriteLine("White minor piece counts do not match");
                 return false;
             }
-            Console.WriteLine("White minor piece counts OK");
-
+            
             if (tempMinorPiecesByColour[(int) Players.Black] != minorPiecesByColour[(int) Players.Black]) {
-                Console.WriteLine("Black minor piece counts do not match");
                 return false;
             }
-            Console.WriteLine("Black minor piece counts OK");
-
+            
             if (SideToMove != (int) Players.White && SideToMove != (int) Players.Black) {
-                Console.WriteLine("Invalid side");
                 return false;
             }
-            Console.WriteLine("Side OK");
-
+            
             if (GeneratePositionKey() != positionKey) {
-                Console.WriteLine("Unequal position key");
                 return false;
             }
-            Console.WriteLine("Position Key OK");
-
+            
             if (!((EnPassant == (int) BoardSquares.NoSquare) 
                 || ((RankLookup[EnPassant] == (int) BoardRanks.Rank6) && (SideToMove == (int) Players.White))
                 || ((RankLookup[EnPassant] == (int) BoardRanks.Rank3) && (SideToMove == (int) Players.Black))
             )) {
-                Console.WriteLine("Invalid En Passant square");
                 return false;
             }
-            Console.WriteLine("En passant squares OK");
-
+            
             if (!(PiecesOnBoard[kingSquares[(int) Players.White]] == (int) Pieces.WhiteKing)) {
-                Console.WriteLine("White king check failed");
                 return false;
             }
-            Console.WriteLine("White king OK");
-
+            
             if (!(PiecesOnBoard[kingSquares[(int) Players.Black]] == (int) Pieces.BlackKing)) {
-                Console.WriteLine("Black king check failed");
                 return false;
             }
-            Console.WriteLine("Black king OK");
-
+        
             return true;
         }
 
@@ -457,7 +418,7 @@ namespace NoobsEngine
         public void ShowSquaresAttackedBy(int side) {
             for (BoardRanks rank = BoardRanks.Rank8; rank >= BoardRanks.Rank1; rank--) {
                 for (BoardFiles file = BoardFiles.A; file <= BoardFiles.H; file++) {
-                    int square = NoobsUtils.FileRankTo120Square(file, rank);
+                    int square = FileRankTo120Square(file, rank);
                     if (IsSquareUnderAttackBy(square, side)) {
                         Console.Write("X ");
                     }
@@ -472,6 +433,227 @@ namespace NoobsEngine
 
         public void ShowSquaresAttackedBy(Players side) {
             ShowSquaresAttackedBy((int) side);
+        }
+
+        public void HashPiece(Pieces piece, int square) {
+            positionKey ^= PieceKeys[(int) piece, square];
+        }
+
+        public void HashCastle() {
+            positionKey ^= CastlingKeys[CastlingPermission];
+        }
+
+        public void HashPlayer() {
+            positionKey ^= (ulong) SideToMove;
+        }
+
+        public void HashEnPassant() {
+            positionKey ^= (ulong) EnPassant;
+        }
+
+        public void ClearPiece(int square) {
+            if (!IsSquareOnBoard(square)) {
+                return;
+            }
+
+            int piece = PiecesOnBoard[square];
+            int colour = (int)PieceColours[piece];
+
+            if (!IsPieceValid(piece)) {
+                return;
+            }
+
+            HashPiece((Pieces) piece, square);
+
+            PiecesOnBoard[square] = (int) Pieces.Empty;
+            MaterialScores[colour] -= PieceValues[piece];
+
+            if (PieceBig[piece]) {
+                bigPiecesByColour[colour]--;
+                if (PieceMajor[piece]) {
+                    majorPiecesByColour[colour]--;
+                }
+                if (PieceMinor[piece]) {
+                    minorPiecesByColour[colour]--;
+                }
+            }
+            else {
+                Pawns[colour].ClearBit(Square120To64[square]);
+                Pawns[(int) Players.Both].ClearBit(Square120To64[square]);
+            }
+
+            int pieceIndex = -1;
+
+            for (int i = 0; i < PieceCount[piece]; i++) {
+                if (PieceList[piece, i] == square) {
+                    pieceIndex = i;
+                    break;
+                }
+            }
+
+            if (pieceIndex == -1) return;
+            
+            PieceCount[piece]--;
+            PieceList[piece, pieceIndex] = PieceList[piece, PieceCount[piece]];
+        }
+
+        public void AddPiece(int square, int piece) {
+            if (!IsSquareOnBoard(square)) {
+                return;
+            }
+
+            int colour = (int)PieceColours[piece];
+
+            if (!IsPieceValid(piece)) {
+                return;
+            }
+
+            HashPiece((Pieces) piece, square);
+
+            PiecesOnBoard[square] = piece;
+            MaterialScores[colour] += PieceValues[piece];
+
+            if (PieceBig[piece]) {
+                bigPiecesByColour[colour]++;
+                if (PieceMajor[piece]) {
+                    majorPiecesByColour[colour]++;
+                }
+                if (PieceMinor[piece]) {
+                    minorPiecesByColour[colour]++;
+                }
+            }
+            else {
+                Pawns[colour].SetBit(Square120To64[square]);
+                Pawns[(int) Players.Both].SetBit(Square120To64[square]);
+            }
+
+            int pieceIndex = -1;
+
+            for (int i = 0; i < PieceCount[piece]; i++) {
+                if (PieceList[piece, i] == square) {
+                    pieceIndex = i;
+                    break;
+                }
+            }
+
+            if (pieceIndex == -1) return;
+            
+            PieceList[piece, pieceIndex] = PieceList[piece, PieceCount[piece]++];
+        }
+
+        public void AddPiece(int square, Pieces piece) {
+            AddPiece(square, (int) piece);
+        }
+
+        public void MovePiece(int from, int to) {
+            if (!IsSquareOnBoard(from) || !IsSquareOnBoard(to)) {
+                return;
+            }
+
+            int piece = PiecesOnBoard[from];
+            int colour = (int) PieceColours[piece];
+
+            HashPiece((Pieces) piece, from);
+            PiecesOnBoard[from] = (int) Pieces.Empty;
+
+            HashPiece((Pieces) piece, to);
+            PiecesOnBoard[to] = piece;
+
+            if (!PieceBig[piece]) {
+                Pawns[colour].ClearBit(Square120To64[from]);
+                Pawns[(int) Players.Both].ClearBit(Square120To64[from]);
+                Pawns[colour].SetBit(Square120To64[to]);
+                Pawns[(int) Players.Both].SetBit(Square120To64[to]);
+            }
+
+            for (int i = 0; i < PieceCount[piece]; i++) {
+                if (PieceList[piece, i] == from) {
+                    PieceList[piece, i] = to;
+                    break;
+                }
+            }
+        }
+
+        /*
+            Returns false if the king is in check/move is illegal
+        */
+        public bool IsMoveLegal(Move move) {
+            CheckBoard();
+
+            int from = move.GetFromPosition();
+            int to = move.GetToPosition();
+
+            int side = SideToMove;
+
+            if (!IsSquareOnBoard(from) || !IsSquareOnBoard(to)) {
+                throw new Exception("Invalid move");
+            }
+
+            if (!IsValidSide(side)) {
+                throw new Exception("Invalid side");
+            }
+
+            if (!IsPieceValid(PiecesOnBoard[from])) {
+                throw new Exception("Invalid piece");
+            }
+
+            history[PliesMade].PositionKey = positionKey;
+
+            if (move.IsEnPassantCapture()) {
+                if (side == (int) Players.White) {
+                    ClearPiece(to - 10);
+                }
+                else {
+                    ClearPiece(to + 10);
+                }
+            }
+            else if (move.IsCastle()) {
+                switch ((BoardSquares) to) {
+                    case BoardSquares.C1:
+                        MovePiece((int) BoardSquares.A1, (int) BoardSquares.D1);
+                        break;
+                    case BoardSquares.C8:
+                        MovePiece((int) BoardSquares.A8, (int) BoardSquares.D8);
+                        break;
+                    case BoardSquares.G1:
+                        MovePiece((int) BoardSquares.H1, (int) BoardSquares.F1);
+                        break;
+                    case BoardSquares.G8:
+                        MovePiece((int) BoardSquares.H8, (int) BoardSquares.F8);
+                        break;
+                    default:
+                        throw new Exception("Invalid castling move");
+                }
+            }
+
+            if (EnPassant != (int) BoardSquares.NoSquare) {
+                HashEnPassant();
+            }
+            HashCastle();
+
+            history[PliesMade].Move = move.Value;
+            history[PliesMade].CastlingPermission = CastlingPermission;
+            history[PliesMade].FiftyMoveRule = FiftyMoveCounter;
+            history[PliesMade].EnPassantSquare = EnPassant;
+
+            CastlingPermission &= CastlePermNums[from];
+            CastlingPermission &= CastlePermNums[to];
+
+            EnPassant = (int) BoardSquares.NoSquare;
+
+            HashCastle();
+
+            int capturedPiece = move.GetCapturedPiece();
+            FiftyMoveCounter++;
+
+            if (capturedPiece != (int) Pieces.Empty) {
+                if (!IsPieceValid(capturedPiece)) {
+                    throw new Exception("Invalid Piece");
+                }
+
+                ClearPiece(to);
+                FiftyMoveCounter = 0;
+            }
         }
     }
 }

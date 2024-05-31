@@ -12,6 +12,6 @@ namespace NoobsEngine.Enums
         WhiteQueenSideCastling = 2,
         BlackKingSideCastling = 4,
         BlackQueenSideCastling = 8,
-        Invalid = 0
+        None = 0
     }
 }

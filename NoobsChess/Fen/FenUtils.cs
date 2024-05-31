@@ -9,11 +9,11 @@ namespace NoobsEngine.Fen {
             BoardRanks rank = BoardRanks.Rank8;
             BoardFiles file = BoardFiles.A;
 
-            int piece = 0;
-            int emptySquares = 0;
+            int piece;
+            int emptySquares;
             
-            int square64 = 0;
-            int square120 = 0;
+            int square64;
+            int square120;
 
             int i = 0;
 
@@ -105,15 +105,10 @@ namespace NoobsEngine.Fen {
                     'Q' => CastlingPermissions.WhiteQueenSideCastling,
                     'k' => CastlingPermissions.BlackKingSideCastling,
                     'q' => CastlingPermissions.BlackQueenSideCastling,
-                    _ => CastlingPermissions.Invalid
+                    _ => CastlingPermissions.None
                 };
 
-                if (perm == CastlingPermissions.Invalid) {
-                    return -1;
-                }
-                else {
-                    board.CastlingPermission |= (int) perm;
-                }
+                board.CastlingPermission |= (int) perm;
                 i++;
             }           
 

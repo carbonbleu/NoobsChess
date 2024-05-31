@@ -79,5 +79,44 @@ namespace NoobsEngine
         public static readonly bool[] PieceRookOrQueen = { false, false, false, false, true, true, false, false, false, false, true, true, false };
         public static readonly bool[] PieceBishopOrQueen = { false, false, false, true, false, true, false, false, false, true, false, true, false };
         public static readonly bool[] PieceSlides = { false, false, false, true, true, true, false, false, false, true, true, true, false };
+
+        public static readonly Dictionary<Players, Pieces[]> SlidingPieces = new Dictionary<Players, Pieces[]> {
+            {Players.White, new[]{Pieces.WhiteBishop, Pieces.WhiteRook, Pieces.WhiteQueen}},
+            {Players.Black, new[]{Pieces.BlackBishop, Pieces.BlackRook, Pieces.BlackQueen}},
+        };
+
+        public static readonly Dictionary<Players, Pieces[]> NonSlidingPieces = new Dictionary<Players, Pieces[]> {
+            {Players.White, new[]{Pieces.WhiteKnight, Pieces.WhiteKing}},
+            {Players.Black, new[]{Pieces.BlackKnight, Pieces.BlackKing}},
+        };
+
+        public static readonly Dictionary<Pieces, int[]> PieceDirs = new Dictionary<Pieces, int[]> {
+            {Pieces.BlackBishop, BishopDirection},
+            {Pieces.BlackKnight, KnightDirection},
+            {Pieces.BlackRook, RookDirection},
+            {Pieces.BlackQueen, KingDirection},
+            {Pieces.BlackKing, KingDirection},
+            {Pieces.WhiteBishop, BishopDirection},
+            {Pieces.WhiteKnight, KnightDirection},
+            {Pieces.WhiteRook, RookDirection},
+            {Pieces.WhiteQueen, KingDirection},
+            {Pieces.WhiteKing, KingDirection},
+        };
+
+        public static readonly int[] CastlePermNums = new int[] {
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+            15, 13, 15, 15, 15, 12, 15, 15, 14, 15,
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+            15,  7, 15, 15, 15,  3, 15, 15, 11, 15,
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15
+        };
+
     }
 }
