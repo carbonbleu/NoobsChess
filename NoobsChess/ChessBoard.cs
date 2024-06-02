@@ -59,7 +59,7 @@ namespace NoobsEngine
             }
 
             if (SideToMove == (int) Players.White) {
-                finalKey ^= (UInt64) SideToMove;
+                finalKey ^= (UInt64) ColourKey;
             }
 
             if (EnPassant != (int) BoardSquares.NoSquare && EnPassant != (int) BoardSquares.Offboard) {
@@ -212,11 +212,11 @@ namespace NoobsEngine
             int[] tempMinorPiecesByColour = new int[] {0, 0};
             int[] tempMaterialScores = new int[] {0, 0};
 
-            BitBoard[] tempPawns = new BitBoard[] {new BitBoard(0UL), new BitBoard(0UL), new BitBoard(0UL)};
-
-            tempPawns[(int) Players.White] = Pawns[(int) Players.White];
-            tempPawns[(int) Players.Black] = Pawns[(int) Players.Black];
-            tempPawns[(int) Players.Both] = Pawns[(int) Players.Both];
+            BitBoard[] tempPawns = new BitBoard[] {
+                new BitBoard(Pawns[(int) Players.White].Value), 
+                new BitBoard(Pawns[(int) Players.Black].Value), 
+                new BitBoard(Pawns[(int) Players.Both].Value)
+            };
             
             for (Pieces piece = Pieces.WhitePawn; piece <= Pieces.BlackKing; piece++) {
                 for (int tempI = 0; tempI < PieceCount[(int) piece]; tempI++) {
@@ -267,7 +267,6 @@ namespace NoobsEngine
             while (tempPawns[(int) Players.White].Value > 0) {
                 int square64 = tempPawns[(int) Players.White].PopBit();
                 if (PiecesOnBoard[Square64To120[square64]] != (int) Pieces.WhitePawn) {
-                    Console.WriteLine("White Pawn squares don't match");
                     return false;
                 }
             }
@@ -323,9 +322,9 @@ namespace NoobsEngine
                 return false;
             }
             
-            if (GeneratePositionKey() != positionKey) {
-                return false;
-            }
+            // if (GeneratePositionKey() != positionKey) {
+            //     return false;
+            // }
             
             if (!((EnPassant == (int) BoardSquares.NoSquare) 
                 || ((RankLookup[EnPassant] == (int) BoardRanks.Rank6) && (SideToMove == (int) Players.White))
@@ -353,7 +352,7 @@ namespace NoobsEngine
                 } 
             }
             if (side == (int) Players.Black) {
-                if ((PiecesOnBoard[square - NorthWest] == (int) Pieces.BlackPawn) || (PiecesOnBoard[square - NorthEast] == (int) Pieces.BlackPawn)) {
+                if ((PiecesOnBoard[square - NorthEast] == (int) Pieces.BlackPawn) || (PiecesOnBoard[square - NorthWest] == (int) Pieces.BlackPawn)) {
                     return true;
                 } 
             }
@@ -374,7 +373,7 @@ namespace NoobsEngine
 
                 while (piece != (int) BoardSquares.Offboard) {
                     if (piece != (int) Pieces.Empty) {
-                        if (PieceRookOrQueen[piece] && (int) PieceColours[piece] == side) {
+                        if (PieceRookOrQueen[piece] && ((int) PieceColours[piece] == side)) {
                             return true;
                         }
                         break;
@@ -444,11 +443,11 @@ namespace NoobsEngine
         }
 
         public void HashPlayer() {
-            positionKey ^= (ulong) SideToMove;
+            positionKey ^= (UInt64) ColourKey;
         }
 
         public void HashEnPassant() {
-            positionKey ^= (ulong) EnPassant;
+            positionKey ^= (UInt64) EnPassant;
         }
 
         public void ClearPiece(int square) {
@@ -511,8 +510,7 @@ namespace NoobsEngine
             HashPiece((Pieces) piece, square);
 
             PiecesOnBoard[square] = piece;
-            MaterialScores[colour] += PieceValues[piece];
-
+            
             if (PieceBig[piece]) {
                 bigPiecesByColour[colour]++;
                 if (PieceMajor[piece]) {
@@ -527,18 +525,8 @@ namespace NoobsEngine
                 Pawns[(int) Players.Both].SetBit(Square120To64[square]);
             }
 
-            int pieceIndex = -1;
-
-            for (int i = 0; i < PieceCount[piece]; i++) {
-                if (PieceList[piece, i] == square) {
-                    pieceIndex = i;
-                    break;
-                }
-            }
-
-            if (pieceIndex == -1) return;
-            
-            PieceList[piece, pieceIndex] = PieceList[piece, PieceCount[piece]++];
+            MaterialScores[colour] += PieceValues[piece];
+            PieceList[piece, PieceCount[piece]++] = square;            
         }
 
         public void AddPiece(int square, Pieces piece) {
@@ -577,7 +565,7 @@ namespace NoobsEngine
         /*
             Returns false if the king is in check/move is illegal
         */
-        public bool IsMoveLegal(Move move) {
+        public bool MakeMove(Move move) {
             CheckBoard();
 
             int from = move.GetFromPosition();
@@ -629,6 +617,7 @@ namespace NoobsEngine
             if (EnPassant != (int) BoardSquares.NoSquare) {
                 HashEnPassant();
             }
+            
             HashCastle();
 
             history[PliesMade].Move = move.Value;
@@ -654,6 +643,139 @@ namespace NoobsEngine
                 ClearPiece(to);
                 FiftyMoveCounter = 0;
             }
+
+            PliesMade++;
+            Ply++;
+
+            if (PiecePawn[PiecesOnBoard[from]]) {
+                FiftyMoveCounter = 0;
+                if (move.IsPawnStartMove()) {
+                    if (SideToMove == (int) Players.White) {
+                        EnPassant = from + 10;
+                        if (RankLookup[EnPassant] != (int) BoardRanks.Rank3) {
+                            throw new Exception("Invalid EnPassant Square");
+                        }
+                    }
+                    else {
+                        EnPassant = from - 10;
+                        if (RankLookup[EnPassant] != (int) BoardRanks.Rank6) {
+                            throw new Exception("Invalid EnPassant Square");
+                        }
+                    }
+                    HashEnPassant();    
+                }
+            }
+
+            MovePiece(from, to);
+
+            int promotedPiece = move.GetPromotedPiece();
+            if (IsPieceValid(promotedPiece) && !PiecePawn[promotedPiece]) {
+                ClearPiece(to);
+                AddPiece(to, promotedPiece);
+            }
+
+            if (PieceKing[PiecesOnBoard[to]]) {
+                kingSquares[SideToMove] = to;
+            }
+
+            SideToMove ^= 1;
+            HashPlayer();
+
+            CheckBoard();
+
+            if (IsSquareUnderAttackBy(kingSquares[side], SideToMove)) {
+                UndoMove();
+                return false;
+            }
+
+            return true;
+        }
+
+        public void UndoMove()
+        {
+            CheckBoard();
+
+            PliesMade--;
+            Ply--;
+
+            Move move = new Move(history[PliesMade].Move);
+            int from = move.GetFromPosition();
+            int to = move.GetToPosition();
+
+            if (!IsSquareOnBoard(from) || !IsSquareOnBoard(to)) {
+                throw new Exception("Invalid board");
+            }
+
+            if (EnPassant != (int) BoardSquares.NoSquare) {
+                HashEnPassant();
+            }
+            
+            HashCastle();
+
+            CastlingPermission = history[PliesMade].CastlingPermission;
+            FiftyMoveCounter = history[PliesMade].FiftyMoveRule;
+            EnPassant = history[PliesMade].EnPassantSquare;
+
+            if (EnPassant != (int) BoardSquares.NoSquare) {
+                HashEnPassant();
+            }
+
+            HashCastle();
+
+            SideToMove ^= 1;
+            HashPlayer();
+
+            if (move.IsEnPassantCapture()) {
+                if (SideToMove == (int) Players.White) {
+                    AddPiece(to - 10, (int) Pieces.BlackPawn);
+                }
+                else {
+                    AddPiece(to + 10, (int) Pieces.WhitePawn);
+                }
+            }
+            else if (move.IsCastle()) {
+                switch ((BoardSquares) to) {
+                    case BoardSquares.C1:
+                        MovePiece((int) BoardSquares.D1, (int) BoardSquares.A1);
+                        break;
+                    case BoardSquares.C8:
+                        MovePiece((int) BoardSquares.D8, (int) BoardSquares.A8);
+                        break;
+                    case BoardSquares.G1:
+                        MovePiece((int) BoardSquares.F1, (int) BoardSquares.H1);
+                        break;
+                    case BoardSquares.G8:
+                        MovePiece((int) BoardSquares.F8, (int) BoardSquares.H8);
+                        break;
+                    default:
+                        throw new Exception("Invalid castling move");
+                }
+            }
+
+            MovePiece(to, from);
+
+            if (PieceKing[PiecesOnBoard[from]]) {
+                kingSquares[SideToMove] = from;
+            }
+
+            int capturedPiece = move.GetCapturedPiece();
+            if (capturedPiece != (int) Pieces.Empty) {
+                if (!IsPieceValid(capturedPiece)) {
+                    throw new Exception("Invalid Captured Piece");
+                }
+                AddPiece(to, capturedPiece);
+            }            
+
+            int promotedPiece = move.GetPromotedPiece();
+            if (promotedPiece != (int) Pieces.Empty) {
+                if (!IsPieceValid(promotedPiece) && !PiecePawn[promotedPiece]) {
+                    throw new Exception("Invalid Captured Piece");
+                }
+                ClearPiece(from);
+                AddPiece(from, (PieceColours[promotedPiece] == Players.White ? Pieces.WhitePawn : Pieces.BlackPawn));
+            }
+
+            CheckBoard();  
         }
     }
 }

@@ -18,7 +18,7 @@ public class MoveGen
     }
 
     public void AddQuietMove(ChessBoard position, int move) {
-        Moves.Add(new Move(move, 0));
+        AddQuietMove(position, new Move(move));
     }
 
     public void AddCaptureMove(ChessBoard position, Move move) {
@@ -26,7 +26,7 @@ public class MoveGen
     }
 
     public void AddCaptureMove(ChessBoard position, int move) {
-        Moves.Add(new Move(move, 0));
+        AddCaptureMove(position, new Move(move));
     }
 
     public void AddEnPassantMove(ChessBoard position, Move move) {
@@ -34,7 +34,7 @@ public class MoveGen
     }
 
     public void AddEnPassantMove(ChessBoard position, int move) {
-        Moves.Add(new Move(move, 0));
+        AddEnPassantMove(position, new Move(move));
     }
 
     void AddWhitePawnCapture(ChessBoard position, int from, int to, int capturedPiece) {
@@ -122,45 +122,49 @@ public class MoveGen
 
     private void GenerateCastlingMoves(ChessBoard position)
     {
-        if ((position.CastlingPermission & (int) CastlingPermissions.WhiteKingSideCastling) > 0) {
-            if ((position.PiecesOnBoard[(int) BoardSquares.F1] == (int) Pieces.Empty) && (position.PiecesOnBoard[(int) BoardSquares.G1] == (int) Pieces.Empty)) {
-                if (!position.IsSquareUnderAttackBy((int) BoardSquares.E1, position.SideToMove ^ 1) 
-                    && !position.IsSquareUnderAttackBy((int) BoardSquares.F1, position.SideToMove ^ 1)) {
-                    AddQuietMove(position, ConstructMove((int) BoardSquares.E1, (int) BoardSquares.G1, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.CastlingMoveFlag));
+        if (position.SideToMove == (int) Players.White) {
+            if ((position.CastlingPermission & (int) CastlingPermissions.WhiteKingSideCastling) > 0) {
+                if ((position.PiecesOnBoard[(int) BoardSquares.F1] == (int) Pieces.Empty) && (position.PiecesOnBoard[(int) BoardSquares.G1] == (int) Pieces.Empty)) {
+                    if (!position.IsSquareUnderAttackBy((int) BoardSquares.E1, (int) Players.Black) 
+                        && !position.IsSquareUnderAttackBy((int) BoardSquares.F1, (int) Players.Black)) {
+                        AddQuietMove(position, ConstructMove((int) BoardSquares.E1, (int) BoardSquares.G1, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.CastlingMoveFlag));
+                    }
                 }
             }
-        }
 
-        if ((position.CastlingPermission & (int) CastlingPermissions.WhiteQueenSideCastling) > 0) {
-            if ((position.PiecesOnBoard[(int) BoardSquares.D1] == (int) Pieces.Empty) 
-                && (position.PiecesOnBoard[(int) BoardSquares.C1] == (int) Pieces.Empty)
-                && (position.PiecesOnBoard[(int) BoardSquares.B1] == (int) Pieces.Empty)) {
-                if (!position.IsSquareUnderAttackBy((int) BoardSquares.E1, position.SideToMove ^ 1) 
-                    && !position.IsSquareUnderAttackBy((int) BoardSquares.D1, position.SideToMove ^ 1)) {
-                    AddQuietMove(position, ConstructMove((int) BoardSquares.E1, (int) BoardSquares.C1, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.CastlingMoveFlag));
+            if ((position.CastlingPermission & (int) CastlingPermissions.WhiteQueenSideCastling) > 0) {
+                if ((position.PiecesOnBoard[(int) BoardSquares.D1] == (int) Pieces.Empty) 
+                    && (position.PiecesOnBoard[(int) BoardSquares.C1] == (int) Pieces.Empty)
+                    && (position.PiecesOnBoard[(int) BoardSquares.B1] == (int) Pieces.Empty)) {
+                    if (!position.IsSquareUnderAttackBy((int) BoardSquares.E1, (int) Players.Black) 
+                        && !position.IsSquareUnderAttackBy((int) BoardSquares.D1, (int) Players.Black)) {
+                        AddQuietMove(position, ConstructMove((int) BoardSquares.E1, (int) BoardSquares.C1, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.CastlingMoveFlag));
+                    }
                 }
             }
         }
+        else {
+            if ((position.CastlingPermission & (int) CastlingPermissions.BlackKingSideCastling) > 0) {
+                if ((position.PiecesOnBoard[(int) BoardSquares.F8] == (int) Pieces.Empty) && (position.PiecesOnBoard[(int) BoardSquares.G8] == (int) Pieces.Empty)) {
+                    if (!position.IsSquareUnderAttackBy((int) BoardSquares.E8, (int) Players.White) 
+                        && !position.IsSquareUnderAttackBy((int) BoardSquares.F8, (int) Players.White)) {
+                        AddQuietMove(position, ConstructMove((int) BoardSquares.E8, (int) BoardSquares.G8, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.CastlingMoveFlag));
+                    }
+                }
+            }
 
-        if ((position.CastlingPermission & (int) CastlingPermissions.BlackKingSideCastling) > 0) {
-            if ((position.PiecesOnBoard[(int) BoardSquares.F8] == (int) Pieces.Empty) && (position.PiecesOnBoard[(int) BoardSquares.G8] == (int) Pieces.Empty)) {
-                if (!position.IsSquareUnderAttackBy((int) BoardSquares.E8, position.SideToMove ^ 1) 
-                    && !position.IsSquareUnderAttackBy((int) BoardSquares.F8, position.SideToMove ^ 1)) {
-                    AddQuietMove(position, ConstructMove((int) BoardSquares.E8, (int) BoardSquares.G8, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.CastlingMoveFlag));
+            if ((position.CastlingPermission & (int) CastlingPermissions.BlackQueenSideCastling) > 0) {
+                if ((position.PiecesOnBoard[(int) BoardSquares.D8] == (int) Pieces.Empty) 
+                    && (position.PiecesOnBoard[(int) BoardSquares.C8] == (int) Pieces.Empty)
+                    && (position.PiecesOnBoard[(int) BoardSquares.B8] == (int) Pieces.Empty)) {
+                    if (!position.IsSquareUnderAttackBy((int) BoardSquares.E8, (int) Players.White) 
+                        && !position.IsSquareUnderAttackBy((int) BoardSquares.D8, (int) Players.White)) {
+                        AddQuietMove(position, ConstructMove((int) BoardSquares.E8, (int) BoardSquares.C8, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.CastlingMoveFlag));
+                    }
                 }
             }
         }
-
-        if ((position.CastlingPermission & (int) CastlingPermissions.BlackQueenSideCastling) > 0) {
-            if ((position.PiecesOnBoard[(int) BoardSquares.D8] == (int) Pieces.Empty) 
-                && (position.PiecesOnBoard[(int) BoardSquares.C8] == (int) Pieces.Empty)
-                && (position.PiecesOnBoard[(int) BoardSquares.B8] == (int) Pieces.Empty)) {
-                if (!position.IsSquareUnderAttackBy((int) BoardSquares.E8, position.SideToMove ^ 1) 
-                    && !position.IsSquareUnderAttackBy((int) BoardSquares.D8, position.SideToMove ^ 1)) {
-                    AddQuietMove(position, ConstructMove((int) BoardSquares.E8, (int) BoardSquares.G8, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.CastlingMoveFlag));
-                }
-            }
-        }
+        
     }
 
     private void GenerateSliderMoves(ChessBoard position)
@@ -174,8 +178,7 @@ public class MoveGen
                 if (IsSquareOffBoard(square)) {
                     return;
                 }
-                Console.WriteLine("Piece {0} on {1}", piece_, NoobsUtils.GetSquareNotation(square));
-
+                
                 for (int idx = 0; idx < PieceDirs[piece_].Length; idx++){
                     int dir = PieceDirs[piece_][idx];
                     int tempSquare = square + dir;
@@ -220,15 +223,17 @@ public class MoveGen
                 // Add pawn capture on right side
                 AddBlackPawnCapture(position, square, square + Direction.NorthWest, position.PiecesOnBoard[square + Direction.NorthWest]);
             }
-
-            if (square + Direction.NorthEast == position.EnPassant) {
-                // Add en passant capture on left side
-                AddCaptureMove(position, ConstructMove(square, square + Direction.NorthEast, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.EnPassantCaptureFlag));
+            if (position.EnPassant != (int) BoardSquares.NoSquare) {
+                if (square + Direction.NorthEast == position.EnPassant) {
+                    // Add en passant capture on left side
+                    AddEnPassantMove(position, ConstructMove(square, square + Direction.NorthEast, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.EnPassantCaptureFlag));
+                }
+                if (square + Direction.NorthWest == position.EnPassant) {
+                    // Add en passant capture on right side
+                    AddEnPassantMove(position, ConstructMove(square, square + Direction.NorthWest, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.EnPassantCaptureFlag));
+                }
             }
-            if (square + Direction.NorthWest == position.EnPassant) {
-                // Add en passant capture on right side
-                AddCaptureMove(position, ConstructMove(square, square + Direction.NorthWest, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.EnPassantCaptureFlag));
-            }
+            
         }
     }
 
@@ -258,13 +263,15 @@ public class MoveGen
                 AddWhitePawnCapture(position, square, square + Direction.SouthWest, position.PiecesOnBoard[square + Direction.SouthWest]);
             }
 
-            if (square + Direction.SouthEast == position.EnPassant) {
-                // Add en passant capture on left side
-                AddCaptureMove(position, ConstructMove(square, square + Direction.SouthEast, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.EnPassantCaptureFlag));
-            }
-            if (square + Direction.SouthWest == position.EnPassant) {
-                // Add en passant capture on right side
-                AddCaptureMove(position, ConstructMove(square, square + Direction.SouthWest, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.EnPassantCaptureFlag));
+            if (position.EnPassant != (int) BoardSquares.NoSquare) {
+                if (square + Direction.SouthEast == position.EnPassant) {
+                    // Add en passant capture on left side
+                    AddEnPassantMove(position, ConstructMove(square, square + Direction.SouthEast, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.EnPassantCaptureFlag));
+                }
+                if (square + Direction.SouthWest == position.EnPassant) {
+                    // Add en passant capture on right side
+                    AddEnPassantMove(position, ConstructMove(square, square + Direction.SouthWest, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.EnPassantCaptureFlag));
+                }
             }
         }
     }
@@ -280,8 +287,7 @@ public class MoveGen
                 if (IsSquareOffBoard(square)) {
                     return;
                 }
-                Console.WriteLine("Piece {0} on {1}", piece_, NoobsUtils.GetSquareNotation(square));
-
+                
                 for (int idx = 0; idx < PieceDirs[piece_].Length; idx++){
                     int dir = PieceDirs[piece_][idx];
                     int tempSquare = square + dir;

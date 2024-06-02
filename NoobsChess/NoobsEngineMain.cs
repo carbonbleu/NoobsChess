@@ -13,25 +13,17 @@ using NoobsChess;
 
 namespace NoobsEngine
 {
-    class NoobsEngineMain
+    public class NoobsEngineMain
     {
         static void Main(string[] args)
         {
             InitAll();
 
             ChessBoard board = new ChessBoard();
-            FenUtils.ParseFen(NoobsDefs.KiwipetePosition, board);
-            
-            MoveGen moveGen = new MoveGen();
-            moveGen.GenerateAllMoves(board);
+            FenUtils.ParseFen(NoobsDefs.StartingFEN, board);
 
-            Console.WriteLine(moveGen);
-            Console.WriteLine(moveGen.Moves.Count);
-
-            Console.WriteLine(board);
-        }
-
-        
+            PerftTesting.FullTest(board, 4);            
+        }       
 
         static void InitAll()
         {
@@ -60,7 +52,6 @@ namespace NoobsEngine
 
         static void InitializeHashKeys()
         {
-            Random random = new Random();
             for (int i = 0; i < 13; i++) {
                 for (int j = 0; j < 120; j++) {
                     PieceKeys[i, j] = NoobsUtils.NextUInt64();
