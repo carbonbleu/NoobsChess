@@ -12,6 +12,7 @@ using static NoobsEngine.NoobsGlobals;
 using NoobsChess;
 using NoobsChess.Io;
 using NoobsChess.Search;
+using NoobsChess.UCI;
 
 namespace NoobsEngine
 {
@@ -21,47 +22,26 @@ namespace NoobsEngine
         {
             InitAll();
 
-            ChessBoard board = new ChessBoard();
-            MoveGen moveGen = new MoveGen();
-            SearchInfo info = new SearchInfo();
-
-            FenUtils.ParseFen(NoobsDefs.WAC1, board);
-            
-            Move move = NoobsDefs.NoMove;
-
-            while (true) {
-                Console.WriteLine(board);
-                Console.Write("Please enter a move or command: ");
-                String input = Console.ReadLine()!;
-
-                if (input == "q") {
-                    break;
-                }
-                else if (input == "t") {
-                    board.UndoMove();
-                    continue;
-                }
-                else if (input == "s") {
-                    // PerftTesting.FullTest(board, 4);
-                    info.DepthLimit = 4;
-                    board.SearchPosition(info);
-                }
-                else {
-                    move = MoveParse.ParseMove(input, board);
-                    if (!move.Equals(NoobsDefs.NoMove)) {
-                        board.StoreMove(move);
-                        board.MakeMove(move);
-                    }
-                }
-            }        
+            UCIUtils.UCILoop();
         }       
 
-        static void InitAll()
+        public static void InitAll()
         {
             Initialize120SquareTo64();
             InitializeBitMasks();
             InitializeHashKeys();
             InitializeBoardLookups();
+            InitializeMVVLVA();
+        }
+
+        private static void InitializeMVVLVA()
+        {
+            for (Pieces attacker = Pieces.WhitePawn; attacker <= Pieces.BlackKing; attacker++) {
+                for (Pieces victim = Pieces.WhitePawn; victim <= Pieces.BlackKing; victim++) {
+                    MVVLVAScores[(int) victim, (int) attacker]
+                        = VictimScores[(int) victim] + 6 - (VictimScores[(int) attacker] / 100);
+                }
+            }
         }
 
         private static void InitializeBoardLookups()
@@ -109,7 +89,7 @@ namespace NoobsEngine
             }
         }
 
-        static void PrintSquares()
+        public static void PrintSquares()
         {
             for (int i = 0; i < NoobsDefs.BoardSquareCount; i++)
             {

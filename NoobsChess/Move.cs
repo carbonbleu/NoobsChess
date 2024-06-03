@@ -56,6 +56,8 @@ namespace NoobsEngine {
 
         public override string ToString()
         {
+            if (Value == 0) return "NoMove";
+
             int fileFrom = FileLookup[GetFromPosition()];
             int fileTo = FileLookup[GetToPosition()];
 

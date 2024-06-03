@@ -73,5 +73,9 @@ namespace NoobsEngine
         public static int Mirror(int square) {
             return NoobsGlobals.Mirror[square];
         }
+
+        public static long GetTimeInMs() {
+            return DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+        }
     }
 }

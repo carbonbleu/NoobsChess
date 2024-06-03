@@ -205,5 +205,8 @@ namespace NoobsEngine
             {Pieces.WhiteBishop, BishopValues},
             {Pieces.BlackBishop, BishopValues},
         };
+
+        public static readonly int[] VictimScores = {0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600};
+        public static int[,] MVVLVAScores = new int[13,13];
     }
 }

@@ -14,6 +14,19 @@ public class MoveGen
     }
 
     public void AddQuietMove(ChessBoard position, Move move) {
+        if (position.SearchKillers[0, position.Ply].Equals(move)) {
+            move.Score = 900000;
+        }
+        else if (position.SearchKillers[1, position.Ply].Equals(move)) {
+            move.Score = 800000;
+        }
+        else {
+            move.Score = position.SearchHistory[
+                position.PiecesOnBoard[move.GetFromPosition()], 
+                position.PiecesOnBoard[move.GetToPosition()]
+            ];
+        }
+
         Moves.Add(move);
     }
 
@@ -22,6 +35,9 @@ public class MoveGen
     }
 
     public void AddCaptureMove(ChessBoard position, Move move) {
+        move.Score = MVVLVAScores[
+            move.GetCapturedPiece(), position.PiecesOnBoard[move.GetFromPosition()]
+        ] + 1000000;
         Moves.Add(move);
     }
 
@@ -30,6 +46,7 @@ public class MoveGen
     }
 
     public void AddEnPassantMove(ChessBoard position, Move move) {
+        move.Score = 105 + 1000000;
         Moves.Add(move);
     }
 
@@ -304,6 +321,160 @@ public class MoveGen
                     }
 
                     AddQuietMove(position, ConstructMove(square, tempSquare, (int) Pieces.Empty, (int) Pieces.Empty, 0));                    
+                }
+            }
+        }
+    }
+
+    public void PickNextMove(int n) {
+        int bestScore = 0;
+        int bestIdx = n;
+
+        for (int i = n; i < Moves.Count; i++) {
+            if (Moves[i].Score > bestScore) {
+                bestScore = Moves[i].Score;
+                bestIdx = i;
+            }
+        }
+
+        Move temp = Moves[n];
+        Moves[n] = Moves[bestIdx];
+        Moves[bestIdx] = temp;
+    }
+
+    public void GenerateAllCaptures(ChessBoard position) {
+        if (!position.CheckBoard()) {
+            throw new Exception("Invalid Board");
+        }
+
+        Moves = new List<Move>();
+
+        if (position.SideToMove == (int) Players.White) {
+            GenerateWhitePawnCaptures(position);
+        }
+        else {
+            GenerateBlackPawnCaptures(position);
+        }        
+        GenerateSliderCaptures(position);
+        GenerateNonSliderCaptures(position);
+    }
+
+    private void GenerateNonSliderCaptures(ChessBoard position)
+    {
+        foreach (Pieces piece_ in NonSlidingPieces[(Players) position.SideToMove]) {
+            int piece = (int) piece_;
+            // For every piece of the piece type
+            for (int i = 0; i < position.PieceCount[piece]; i++) {
+                int square = position.PieceList[piece, i];
+                // If it is outside the board, there is some error
+                if (IsSquareOffBoard(square)) {
+                    return;
+                }
+                
+                for (int idx = 0; idx < PieceDirs[piece_].Length; idx++){
+                    int dir = PieceDirs[piece_][idx];
+                    int tempSquare = square + dir;
+
+                    if (IsSquareOffBoard(tempSquare)) {
+                        continue;
+                    }
+
+                    if (position.PiecesOnBoard[tempSquare] != (int) Pieces.Empty) {
+                        if (PieceColours[position.PiecesOnBoard[tempSquare]] == (Players)(position.SideToMove ^ 1)) {
+                            AddCaptureMove(position, ConstructMove(square, tempSquare, position.PiecesOnBoard[tempSquare], (int) Pieces.Empty, 0));
+                        }
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+
+    private void GenerateSliderCaptures(ChessBoard position)
+    {
+        foreach (Pieces piece_ in SlidingPieces[(Players) position.SideToMove]) {
+            int piece = (int) piece_;
+            // For every piece of the piece type
+            for (int i = 0; i < position.PieceCount[piece]; i++) {
+                int square = position.PieceList[piece, i];
+                // If it is outside the board, there is some error
+                if (IsSquareOffBoard(square)) {
+                    return;
+                }
+                
+                for (int idx = 0; idx < PieceDirs[piece_].Length; idx++){
+                    int dir = PieceDirs[piece_][idx];
+                    int tempSquare = square + dir;
+
+                    while (!IsSquareOffBoard(tempSquare)) {
+                        if (position.PiecesOnBoard[tempSquare] != (int) Pieces.Empty) {
+                            if (PieceColours[position.PiecesOnBoard[tempSquare]] == (Players)(position.SideToMove ^ 1)) {
+                                AddCaptureMove(position, ConstructMove(square, tempSquare, position.PiecesOnBoard[tempSquare], (int) Pieces.Empty, 0));
+                            }
+                            break;
+                        }
+                        tempSquare += dir;
+                    }                   
+                }
+            }
+        }
+    }
+
+    private void GenerateBlackPawnCaptures(ChessBoard position)
+    {
+        for (int pI = 0; pI < position.PieceCount[(int) Pieces.BlackPawn]; pI++) {
+            int square = position.PieceList[(int) Pieces.BlackPawn, pI];
+            if (IsSquareOffBoard(square)) {
+                throw new Exception("Invalid Board");
+            }
+
+            if (!IsSquareOffBoard(square + Direction.NorthEast) && (PieceColours[position.PiecesOnBoard[square + Direction.NorthEast]] == Players.White)) {
+                // Add pawn capture on left side
+                AddBlackPawnCapture(position, square, square + Direction.NorthEast, position.PiecesOnBoard[square + Direction.NorthEast]);
+            }
+            if (!IsSquareOffBoard(square + Direction.NorthWest) && (PieceColours[position.PiecesOnBoard[square + Direction.NorthWest]] == Players.White)) {
+                // Add pawn capture on right side
+                AddBlackPawnCapture(position, square, square + Direction.NorthWest, position.PiecesOnBoard[square + Direction.NorthWest]);
+            }
+            if (position.EnPassant != (int) BoardSquares.NoSquare) {
+                if (square + Direction.NorthEast == position.EnPassant) {
+                    // Add en passant capture on left side
+                    AddEnPassantMove(position, ConstructMove(square, square + Direction.NorthEast, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.EnPassantCaptureFlag));
+                }
+                if (square + Direction.NorthWest == position.EnPassant) {
+                    // Add en passant capture on right side
+                    AddEnPassantMove(position, ConstructMove(square, square + Direction.NorthWest, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.EnPassantCaptureFlag));
+                }
+            }
+            
+        }
+    }
+
+    private void GenerateWhitePawnCaptures(ChessBoard position)
+    {
+        for (int pI = 0; pI < position.PieceCount[(int) Pieces.WhitePawn]; pI++) {
+            int square = position.PieceList[(int) Pieces.WhitePawn, pI];
+            if (IsSquareOffBoard(square)) {
+                throw new Exception("Invalid Board");
+            }
+
+            if (!IsSquareOffBoard(square + Direction.SouthEast) && (PieceColours[position.PiecesOnBoard[square + Direction.SouthEast]] == Players.Black)) {
+                // Add pawn capture on left side
+                AddWhitePawnCapture(position, square, square + Direction.SouthEast, position.PiecesOnBoard[square + Direction.SouthEast]);
+            }
+            if (!IsSquareOffBoard(square + Direction.SouthWest) && (PieceColours[position.PiecesOnBoard[square + Direction.SouthWest]] == Players.Black)) {
+                // Add pawn capture on right side
+                AddWhitePawnCapture(position, square, square + Direction.SouthWest, position.PiecesOnBoard[square + Direction.SouthWest]);
+            }
+
+            if (position.EnPassant != (int) BoardSquares.NoSquare) {
+                if (square + Direction.SouthEast == position.EnPassant) {
+                    // Add en passant capture on left side
+                    AddEnPassantMove(position, ConstructMove(square, square + Direction.SouthEast, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.EnPassantCaptureFlag));
+                }
+                if (square + Direction.SouthWest == position.EnPassant) {
+                    // Add en passant capture on right side
+                    AddEnPassantMove(position, ConstructMove(square, square + Direction.SouthWest, (int) Pieces.Empty, (int) Pieces.Empty, NoobsDefs.EnPassantCaptureFlag));
                 }
             }
         }

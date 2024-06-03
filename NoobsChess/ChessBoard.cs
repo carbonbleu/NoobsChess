@@ -44,15 +44,20 @@ namespace NoobsEngine
 
         public int[,] PieceList { get; set; } = new int[13,10];
 
-        public Dictionary<UInt64, Move> PVTable;
-        public Move[] PVList = new Move[64];
+        public Dictionary<UInt64, Move> PVTable = new Dictionary<ulong, Move>{};
+        public List<Move> PVList = new List<Move>();
 
         public int[,] SearchHistory = new int[13, NoobsDefs.BoardSquareCount];
-        public int[,] SearchKillers = new int[2, NoobsDefs.MaxDepth];
+        public Move[,] SearchKillers = new Move[2, NoobsDefs.MaxDepth];
 
         public ChessBoard() {
             Reset();
-            PVTable = new Dictionary<ulong, Move>{};
+
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < NoobsDefs.MaxDepth; j++) {
+                    SearchKillers[i, j] = NoobsDefs.NoMove;
+                }
+            }
         }
 
         public UInt64 GeneratePositionKey() {
@@ -828,13 +833,12 @@ namespace NoobsEngine
 
         public void FillPVLine(int depth) {
             Move move = GetStoredMove(positionKey);
-            int count = 0;
+            PVList = new List<Move>();
             
-            while (!move.Equals(NoobsDefs.NoMove) && count < depth) {
+            while (!move.Equals(NoobsDefs.NoMove) && PVList.Count < depth) {
                 if (DoesMoveExist(move)) {
                     MakeMove(move);
-                    PVList[count] = move;
-                    count++;
+                    PVList.Add(move);
                 }
                 else {
                     break;
@@ -917,20 +921,24 @@ namespace NoobsEngine
 
             for (int depth = 1; depth <= info.DepthLimit; depth++) {
                 int bestScore = AlphaBetaPrune(-30000, 30000, depth, info, true);
+
+                if (info.IsStopped) {
+                    break;
+                }
+
                 FillPVLine(depth);
                 bestMove = PVList[0];
 
-                Console.WriteLine("Depth: {0} Score: {1}, Move: {2}, Nodes: {3}", depth, bestScore, bestMove, info.Nodes);
+                Console.Write("info score cp depth {0} nodes {1} time {2} ", depth, info.Nodes, GetTimeInMs() - info.StartTime);
 
-                Console.WriteLine("Line of {0} moves", depth);
-
+                Console.Write("pv");
                 foreach (Move mvI in PVList) {
-                    Console.Write("{0} ", mvI);
+                    Console.Write(" {0}", mvI);
                 }
                 Console.WriteLine();
-
-                Console.WriteLine("Ordering: {0}", info.FailHigh / info.FailHighFirst);
             }
+
+            Console.WriteLine("bestmove {0}", bestMove);
         }
 
         public void PollTimeOver() {
@@ -946,7 +954,7 @@ namespace NoobsEngine
 
             for (int i = 0; i < 2; i++) {
                 for (int j = 0; j < NoobsDefs.MaxDepth; j++) {
-                    SearchKillers[i, j] = 0;
+                    SearchKillers[i, j] = NoobsDefs.NoMove;
                 }
             }
 
@@ -954,8 +962,7 @@ namespace NoobsEngine
 
             Ply = 0;
 
-            info.StartTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            info.StopTime = 0;
+            info.IsStopped = false;
             info.Nodes = 0;
             info.FailHigh = 0;
             info.FailHighFirst = 0;
@@ -964,9 +971,13 @@ namespace NoobsEngine
         public int AlphaBetaPrune(int alpha, int beta, int depth, SearchInfo info, bool nullMovesAllowed) {
             if (depth == 0) {
                 info.Nodes++;
-                return Evaluate();
+                return QuiescenceSearch(alpha, beta, info);
             }
-
+            
+            if ((info.Nodes & 2047) == 0) {
+                info.CheckUp();
+            }
+            
             info.Nodes++;
 
             if (IsRepetition() || FiftyMoveCounter >= 100) {
@@ -980,11 +991,24 @@ namespace NoobsEngine
             MoveGen moveGen = new MoveGen();
             moveGen.GenerateAllMoves(this);
 
+            Move pvMove = GetStoredMove(positionKey);
+
+            if (!pvMove.Equals(NoobsDefs.NoMove)) {
+                for (int i = 0; i < moveGen.Moves.Count; i++) {
+                    if (moveGen.Moves[i].Equals(pvMove)) {
+                        moveGen.Moves[i].Score = 2000000;
+                        break;
+                    }
+                }
+            }
+
             int legalMoves = 0;
             int oldAlpha = alpha;
             Move bestMove = NoobsDefs.NoMove;
             
             for (int i = 0; i < moveGen.Moves.Count; i++) {
+                moveGen.PickNextMove(i);
+
                 Move move = moveGen.Moves[i];
 
                 if (!MakeMove(move)) {
@@ -995,17 +1019,32 @@ namespace NoobsEngine
                 int score = -AlphaBetaPrune(-beta, -alpha, depth - 1, info, nullMovesAllowed);
                 UndoMove();
 
+                if (info.IsStopped) {
+                    return 0;
+                }
+
                 if (score > alpha) {
                     if (score >= beta) {
                         if (legalMoves == 1) {
                             info.FailHighFirst++;
                         }
                         info.FailHigh++;
+
+                        if (!move.IsCapture()) {
+                            SearchKillers[1, Ply] = SearchKillers[0, Ply];
+                            SearchKillers[0, Ply] = move;
+                        }
+
                         return beta;
                     }
 
                     alpha = score;
                     bestMove = move;
+
+                    if (!move.IsCapture()) {
+                        SearchHistory[PiecesOnBoard[bestMove.GetFromPosition()], PiecesOnBoard[bestMove.GetToPosition()]]
+                            += depth;
+                    }
                 }
             }
 
@@ -1026,7 +1065,77 @@ namespace NoobsEngine
         }
 
         public int QuiescenceSearch(int alpha, int beta, SearchInfo info) {
-            return 0;
+            if ((info.Nodes & 2047) == 0) {
+                info.CheckUp();
+            }
+
+            info.Nodes++;
+
+            int oldAlpha = alpha;
+
+            if (IsRepetition() || FiftyMoveCounter >= 100) {
+                return 0;
+            }
+
+            if (Ply > NoobsDefs.MaxDepth - 1) {
+                return Evaluate();
+            }
+
+            int score = Evaluate();
+
+            if (score >= beta) {
+                return beta;
+            }
+
+            if (score > alpha) {
+                alpha = score;
+            }
+
+            MoveGen moveGen = new MoveGen();
+            moveGen.GenerateAllCaptures(this);
+            
+            int legalMoves = 0;
+            Move bestMove = NoobsDefs.NoMove;
+            score = -30000;
+
+            Move pvMove = GetStoredMove(positionKey);           
+            
+            for (int i = 0; i < moveGen.Moves.Count; i++) {
+                moveGen.PickNextMove(i);
+
+                Move move = moveGen.Moves[i];
+
+                if (!MakeMove(move)) {
+                    continue;
+                }
+
+                legalMoves++;
+                score = -QuiescenceSearch(-beta, -alpha, info);
+                UndoMove();
+
+                if (info.IsStopped) {
+                    return 0;
+                }
+
+                if (score > alpha) {
+                    if (score >= beta) {
+                        if (legalMoves == 1) {
+                            info.FailHighFirst++;
+                        }
+                        info.FailHigh++;
+                        return beta;
+                    }
+
+                    alpha = score;
+                    bestMove = move;
+                }
+            }
+
+            if (alpha != oldAlpha) {
+                StoreMove(bestMove);
+            }
+
+            return alpha;
         }
 
     }
