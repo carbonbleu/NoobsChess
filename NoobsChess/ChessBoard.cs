@@ -9,6 +9,8 @@ using NoobsEngine.Enums;
 using static NoobsEngine.NoobsGlobals;
 using static NoobsEngine.Enums.Direction;
 using static NoobsEngine.NoobsUtils;
+using NoobsChess;
+using NoobsChess.Search;
 
 namespace NoobsEngine
 {
@@ -42,8 +44,15 @@ namespace NoobsEngine
 
         public int[,] PieceList { get; set; } = new int[13,10];
 
+        public Dictionary<UInt64, Move> PVTable;
+        public Move[] PVList = new Move[64];
+
+        public int[,] SearchHistory = new int[13, NoobsDefs.BoardSquareCount];
+        public int[,] SearchKillers = new int[2, NoobsDefs.MaxDepth];
+
         public ChessBoard() {
             Reset();
+            PVTable = new Dictionary<ulong, Move>{};
         }
 
         public UInt64 GeneratePositionKey() {
@@ -777,5 +786,248 @@ namespace NoobsEngine
 
             CheckBoard();  
         }
+
+        public bool IsRepetition() {
+            for (int i = PliesMade - FiftyMoveCounter; i < PliesMade - 1; i++) {
+                if (positionKey == history[i].PositionKey) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void StoreMove(Move move) {
+            PVTable[positionKey] = move;
+        }
+
+        public Move GetStoredMove(UInt64 positionKey) {
+            if (!PVTable.ContainsKey(positionKey)) {
+                return NoobsDefs.NoMove;
+            }
+            return PVTable[positionKey];
+        }
+
+        public bool DoesMoveExist(Move move) {
+            MoveGen moveGen = new MoveGen();
+            moveGen.GenerateAllMoves(this);
+
+            for (int i = 0; i < moveGen.Moves.Count; i++) {
+                Move mvI = moveGen.Moves[i];
+                if (!MakeMove(mvI)) {
+                    continue;
+                }
+                UndoMove();
+                if (mvI.Value == move.Value) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void FillPVLine(int depth) {
+            Move move = GetStoredMove(positionKey);
+            int count = 0;
+            
+            while (!move.Equals(NoobsDefs.NoMove) && count < depth) {
+                if (DoesMoveExist(move)) {
+                    MakeMove(move);
+                    PVList[count] = move;
+                    count++;
+                }
+                else {
+                    break;
+                }
+
+                move = GetStoredMove(positionKey);
+            }
+
+            while (Ply > 0) {
+                UndoMove();
+            }
+        } 
+
+        public int Evaluate() {
+            int score = MaterialScores[(int) Players.White] - MaterialScores[(int) Players.Black];
+
+            score += GetCumulativeScoresForPiece(Pieces.WhitePawn, Players.White);
+            score -= GetCumulativeScoresForPiece(Pieces.BlackPawn, Players.Black);
+            score += GetCumulativeScoresForPiece(Pieces.WhiteKnight, Players.White);
+            score -= GetCumulativeScoresForPiece(Pieces.BlackKnight, Players.Black);
+            score += GetCumulativeScoresForPiece(Pieces.WhiteBishop, Players.White);
+            score -= GetCumulativeScoresForPiece(Pieces.BlackBishop, Players.Black);
+            score += GetCumulativeScoresForPiece(Pieces.WhiteKing, Players.White);
+            score -= GetCumulativeScoresForPiece(Pieces.BlackKing, Players.Black);
+
+            score += GetCumulativeScoresForKing(Players.White);
+            score -= GetCumulativeScoresForKing(Players.Black);
+
+            if (SideToMove == (int) Players.White) {
+                return score;
+            } 
+            else {
+                return -score;
+            }
+        }
+
+        private int GetCumulativeScoresForKing(Players colour)
+        {
+            Pieces piece;
+            int score = 0;
+            if (colour == Players.White) {
+                piece = Pieces.WhiteKing;
+            }
+            else {
+                piece = Pieces.BlackKing;
+            }
+
+            for (int i = 0; i < PieceCount[(int) piece]; i++) {
+                int square = Square120To64[PieceList[(int) piece, i]];
+                if (colour == Players.Black) {
+                    square = Mirror(square);
+                }
+                score += NoobsGlobals.KingOpening[square];                
+            }
+
+            return score;
+        }
+
+        private int GetCumulativeScoresForPiece(Pieces piece, Players colour)
+        {
+            int score = 0;
+
+            for (int i = 0; i < PieceCount[(int) piece]; i++) {
+                int square = Square120To64[PieceList[(int) piece, i]];
+                if (colour == Players.Black) {
+                    square = Mirror(square);
+                }
+                if (piece != Pieces.WhiteKing && piece != Pieces.BlackKing) {
+                    score += NoobsGlobals.PieceToValuesMap[piece][square];
+                }                
+            }
+
+            return score;
+        }
+
+        public void SearchPosition(SearchInfo info) {
+            Move bestMove = NoobsDefs.NoMove;
+            
+            ClearForSearch(info);
+
+            for (int depth = 1; depth <= info.DepthLimit; depth++) {
+                int bestScore = AlphaBetaPrune(-30000, 30000, depth, info, true);
+                FillPVLine(depth);
+                bestMove = PVList[0];
+
+                Console.WriteLine("Depth: {0} Score: {1}, Move: {2}, Nodes: {3}", depth, bestScore, bestMove, info.Nodes);
+
+                Console.WriteLine("Line of {0} moves", depth);
+
+                foreach (Move mvI in PVList) {
+                    Console.Write("{0} ", mvI);
+                }
+                Console.WriteLine();
+
+                Console.WriteLine("Ordering: {0}", info.FailHigh / info.FailHighFirst);
+            }
+        }
+
+        public void PollTimeOver() {
+
+        }
+
+        public void ClearForSearch(SearchInfo info) {
+            for (int i = 0; i < 13; i++) {
+                for (int j = 0; j < NoobsDefs.BoardSquareCount; j++) {
+                    SearchHistory[i, j] = 0;
+                }
+            }
+
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < NoobsDefs.MaxDepth; j++) {
+                    SearchKillers[i, j] = 0;
+                }
+            }
+
+            PVTable.Clear();
+
+            Ply = 0;
+
+            info.StartTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            info.StopTime = 0;
+            info.Nodes = 0;
+            info.FailHigh = 0;
+            info.FailHighFirst = 0;
+        }
+
+        public int AlphaBetaPrune(int alpha, int beta, int depth, SearchInfo info, bool nullMovesAllowed) {
+            if (depth == 0) {
+                info.Nodes++;
+                return Evaluate();
+            }
+
+            info.Nodes++;
+
+            if (IsRepetition() || FiftyMoveCounter >= 100) {
+                return 0;
+            }
+
+            if (Ply > NoobsDefs.MaxDepth - 1) {
+                return Evaluate();
+            }
+
+            MoveGen moveGen = new MoveGen();
+            moveGen.GenerateAllMoves(this);
+
+            int legalMoves = 0;
+            int oldAlpha = alpha;
+            Move bestMove = NoobsDefs.NoMove;
+            
+            for (int i = 0; i < moveGen.Moves.Count; i++) {
+                Move move = moveGen.Moves[i];
+
+                if (!MakeMove(move)) {
+                    continue;
+                }
+
+                legalMoves++;
+                int score = -AlphaBetaPrune(-beta, -alpha, depth - 1, info, nullMovesAllowed);
+                UndoMove();
+
+                if (score > alpha) {
+                    if (score >= beta) {
+                        if (legalMoves == 1) {
+                            info.FailHighFirst++;
+                        }
+                        info.FailHigh++;
+                        return beta;
+                    }
+
+                    alpha = score;
+                    bestMove = move;
+                }
+            }
+
+            if (legalMoves == 0) {
+                if (IsSquareUnderAttackBy(kingSquares[SideToMove], SideToMove ^ 1)) {
+                    return -NoobsDefs.Mate + Ply;
+                }
+                else {
+                    return 0;
+                }
+            }
+
+            if (alpha != oldAlpha) {
+                StoreMove(bestMove);
+            }
+
+            return alpha;
+        }
+
+        public int QuiescenceSearch(int alpha, int beta, SearchInfo info) {
+            return 0;
+        }
+
     }
 }

@@ -10,6 +10,8 @@ using NoobsEngine.Fen;
 
 using static NoobsEngine.NoobsGlobals;
 using NoobsChess;
+using NoobsChess.Io;
+using NoobsChess.Search;
 
 namespace NoobsEngine
 {
@@ -20,9 +22,38 @@ namespace NoobsEngine
             InitAll();
 
             ChessBoard board = new ChessBoard();
-            FenUtils.ParseFen(NoobsDefs.StartingFEN, board);
+            MoveGen moveGen = new MoveGen();
+            SearchInfo info = new SearchInfo();
 
-            PerftTesting.FullTest(board, 4);            
+            FenUtils.ParseFen(NoobsDefs.WAC1, board);
+            
+            Move move = NoobsDefs.NoMove;
+
+            while (true) {
+                Console.WriteLine(board);
+                Console.Write("Please enter a move or command: ");
+                String input = Console.ReadLine()!;
+
+                if (input == "q") {
+                    break;
+                }
+                else if (input == "t") {
+                    board.UndoMove();
+                    continue;
+                }
+                else if (input == "s") {
+                    // PerftTesting.FullTest(board, 4);
+                    info.DepthLimit = 4;
+                    board.SearchPosition(info);
+                }
+                else {
+                    move = MoveParse.ParseMove(input, board);
+                    if (!move.Equals(NoobsDefs.NoMove)) {
+                        board.StoreMove(move);
+                        board.MakeMove(move);
+                    }
+                }
+            }        
         }       
 
         static void InitAll()

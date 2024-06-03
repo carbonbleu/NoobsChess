@@ -84,5 +84,16 @@ namespace NoobsEngine {
 
             return result;
         }
+
+        public override bool Equals(object? obj)
+        {
+            if (!(obj is Move)) return false;
+            return Value == ((Move) obj).Value;
+        }
+
+        public override int GetHashCode()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

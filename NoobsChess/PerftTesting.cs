@@ -1,4 +1,5 @@
-﻿using NoobsEngine;
+﻿using System.Diagnostics;
+using NoobsEngine;
 
 namespace NoobsChess;
 
@@ -31,6 +32,8 @@ public class PerftTesting
 
         leafNodes = 0;
 
+        Stopwatch watch = Stopwatch.StartNew();
+
         MoveGen moveGen = new MoveGen();
         moveGen.GenerateAllMoves(position);
 
@@ -53,7 +56,7 @@ public class PerftTesting
             // }
             
         }
-
-        Console.WriteLine("{0} leaf nodes visited", leafNodes);
+        watch.Stop();
+        Console.WriteLine("{0} leaf nodes visited in {1} ms", leafNodes, watch.ElapsedMilliseconds);
     }
 }

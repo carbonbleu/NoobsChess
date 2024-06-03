@@ -70,5 +70,8 @@ namespace NoobsEngine
             return FileLookup[square] == (int) BoardSquares.Offboard;
         }
 
+        public static int Mirror(int square) {
+            return NoobsGlobals.Mirror[square];
+        }
     }
 }
